@@ -18,6 +18,7 @@
 
         .modal { display: none; position: fixed; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
         .modal-content { background: #1e1e1e; margin: 10% auto; padding: 20px; width: 400px; border-radius: 10px; }
+        #modal-body p { border-bottom: 1px solid #333; padding: 5px; }
     </style>
 </head>
 <body>
@@ -41,11 +42,15 @@
         </div>
     </div>
 
+    <div style="margin-top: 20px;">
+        <button onclick="resetData()" style="background: #ff9800; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Reset History</button>
+    </div>
+
     <div id="myModal" class="modal">
         <div class="modal-content">
             <h2 id="modal-title">Log</h2>
             <div id="modal-body" style="text-align: left; max-height: 300px; overflow-y: auto;"></div>
-            <button onclick="document.getElementById('myModal').style.display='none'">Close</button>
+            <button onclick="document.getElementById('myModal').style.display='none'" style="margin-top:15px;">Close</button>
         </div>
     </div>
 
@@ -62,36 +67,74 @@
 
         let falls = [], intrusions = [];
 
-        // Real-time Listeners
+        // Real-time Listeners with NULL checks to prevent layout shift
         db.ref('orchard_status/zone_a').on('value', s => {
-            const d = s.val(); if(!d) return;
-            document.getElementById('weight-txt').innerText = (d.net_weight_g/1000).toFixed(2) + " kg";
+            const d = s.val() || { net_weight_g: 0, fall_detected: false, intrusion_detected: false };
             
-            // DURIAN LIGHT (GREEN)
+            document.getElementById('weight-txt').innerText = (d.net_weight_g / 1000).toFixed(2) + " kg";
+            
             const dBox = document.getElementById('durian-box');
-            if(d.fall_detected) { dBox.className = "box green-light"; document.getElementById('fall-txt').innerText="FALL DETECTED!"; }
-            else { dBox.className = "box"; document.getElementById('fall-txt').innerText="Monitoring..."; }
+            if(d.fall_detected) { 
+                dBox.className = "box green-light"; 
+                document.getElementById('fall-txt').innerText = "FALL DETECTED!"; 
+            } else { 
+                dBox.className = "box"; 
+                document.getElementById('fall-txt').innerText = "Monitoring..."; 
+            }
 
-            // MONKEY LIGHT (RED)
             const mBox = document.getElementById('monkey-box');
-            if(d.intrusion_detected) { mBox.className = "box red-light"; document.getElementById('monkey-txt').innerText="MONKEY ALERT!"; }
-            else { mBox.className = "box"; document.getElementById('monkey-txt').innerText="Area Clear"; }
+            if(d.intrusion_detected) { 
+                mBox.className = "box red-light"; 
+                document.getElementById('monkey-txt').innerText = "MONKEY ALERT!"; 
+            } else { 
+                mBox.className = "box"; 
+                document.getElementById('monkey-txt').innerText = "Area Clear"; 
+            }
         });
 
-        db.ref('metrics/durian_fall_count').on('value', s => document.getElementById('count-val').innerText = s.val() || 0);
-        db.ref('fall_events_log').on('value', s => { falls=[]; s.forEach(c => falls.push(c.val())); });
-        db.ref('intrusion_images').on('value', s => { intrusions=[]; s.forEach(c => intrusions.push(c.val())); });
+        db.ref('metrics/durian_fall_count').on('value', s => {
+            document.getElementById('count-val').innerText = s.val() || 0;
+        });
+
+        db.ref('fall_events_log').on('value', s => {
+            falls = [];
+            if(s.exists()) s.forEach(c => falls.push(c.val()));
+        });
+
+        db.ref('intrusion_images').on('value', s => {
+            intrusions = [];
+            if(s.exists()) s.forEach(c => intrusions.push(c.val()));
+        });
 
         function openModal(type) {
-            const body = document.getElementById('modal-body'); body.innerHTML = "";
+            const body = document.getElementById('modal-body'); 
+            body.innerHTML = "";
             if(type === 'fall') {
                 document.getElementById('modal-title').innerText = "Fall History";
-                falls.reverse().forEach(f => body.innerHTML += `<p>${new Date(f.timestamp*1000).toLocaleString()} - ${f.net_weight_g}g</p>`);
+                if(falls.length === 0) body.innerHTML = "<p>No data available.</p>";
+                [...falls].reverse().forEach(f => {
+                    body.innerHTML += `<p>${new Date(f.timestamp*1000).toLocaleString()} - ${(f.net_weight_g/1000).toFixed(2)}kg</p>`;
+                });
             } else {
                 document.getElementById('modal-title').innerText = "Monkey History";
-                intrusions.reverse().forEach(i => body.innerHTML += `<p>${new Date(i.timestamp*1000).toLocaleString()} - Alarm Triggered</p>`);
+                if(intrusions.length === 0) body.innerHTML = "<p>No data available.</p>";
+                [...intrusions].reverse().forEach(i => {
+                    body.innerHTML += `<p>${new Date(i.timestamp*1000).toLocaleString()} - Alarm Triggered</p>`;
+                });
             }
             document.getElementById('myModal').style.display = 'block';
+        }
+
+        function resetData() {
+            if(confirm("Are you sure you want to clear all history? This cannot be undone.")) {
+                db.ref().update({
+                    'metrics/durian_fall_count': 0,
+                    'fall_events_log': null,
+                    'intrusion_images': null
+                }).then(() => {
+                    alert("Data reset successfully.");
+                });
+            }
         }
     </script>
 </body>
