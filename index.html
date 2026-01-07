@@ -2,144 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Droptrack – Smart Durian Detection System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+    <title>Droptrack Dashboard</title>
     <style>
-        /* --- GLOBAL STYLES --- */
-        body { font-family: 'Arial', sans-serif; background-color: #121212; color: #e0e0e0; text-align: center; margin: 0; padding: 0; }
-        .header-container { display: flex; align-items: center; justify-content: center; padding-top: 20px; gap: 15px; }
-        .main-logo { width: 70px; height: auto; }
-        h1 { color: #ffffff; margin: 0; }
-
-        /* --- COUNTER & RESET --- */
-        #fall-counter-display { margin: 20px auto; font-size: 1.2em; color: #00e676; background-color: #1e1e1e; padding: 15px; border-radius: 8px; width: fit-content; }
-        #reset-button { background-color: #ff9800; color: #121212; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
-        /* --- DETECTION BOXES --- */
-        #data-sections { display: flex; justify-content: center; gap: 30px; padding: 30px; flex-wrap: wrap; }
-        .section-box { background-color: #1e1e1e; padding: 30px; border-radius: 12px; width: 40%; min-width: 300px; cursor: pointer; transition: all 0.3s ease; border: 2px solid #333; }
+        body { font-family: sans-serif; background: #121212; color: #eee; text-align: center; }
+        .header { display: flex; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
+        .logo { width: 60px; }
+        #counter { background: #1e1e1e; padding: 15px; border-radius: 8px; display: inline-block; margin: 20px; border: 1px solid #00e676; }
         
-        /* Default Gray state */
-        .status-default { border: 2px solid #555; }
+        .container { display: flex; justify-content: center; gap: 20px; padding: 20px; }
+        .box { background: #1e1e1e; padding: 30px; border-radius: 15px; width: 350px; border: 2px solid #444; transition: 0.4s; cursor: pointer; }
+        
+        /* LIGHT UP COLORS */
+        .green-light { background: #00331a; border-color: #00e676; box-shadow: 0 0 20px #00e676; }
+        .red-light { background: #330000; border-color: #ff1744; box-shadow: 0 0 20px #ff1744; }
 
-        /* GREEN for Durian Fall */
-        .status-alert-durian { 
-            background-color: #004d40; 
-            border: 3px solid #00e676; 
-            box-shadow: 0 0 20px rgba(0, 230, 118, 0.6); 
-            color: #fff; 
-        }
-
-        /* RED for Monkey Detection */
-        .status-alert-monkey { 
-            background-color: #4a0000; 
-            border: 3px solid #ff1744; 
-            box-shadow: 0 0 20px rgba(255, 23, 68, 0.6); 
-            color: #fff; 
-        }
-
-        /* --- MODAL --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; }
-        .modal-content-box { background: #1e1e1e; padding: 20px; border-radius: 10px; width: 80%; max-width: 500px; margin: 10% auto; }
-        .close-button { float: right; color: white; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .intrusion-log-item { border-bottom: 1px solid #444; padding: 10px 0; text-align: left; }
+        .modal { display: none; position: fixed; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: #1e1e1e; margin: 10% auto; padding: 20px; width: 400px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <img src="image_5fef39.png" alt="Durian Logo" class="main-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3655/3655416.png'">
-        <h1>Droptrack Dashboard</h1>
+    <div class="header">
+        <img src="image_5fef39.png" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3655/3655416.png'">
+        <h1>Droptrack System</h1>
     </div>
 
-    <div id="fall-counter-display">Total Durians Detected: <strong id="durian-count">0</strong></div>
-    <button onclick="resetData()" id="reset-button">Reset History</button>
+    <div id="counter">Total Durians: <span id="count-val">0</span></div>
 
-    <div id="data-sections">
-        <div id="durian-box" class="section-box status-default" onclick="showDetails('fall')">
-            <h2>Durian Fall Detection</h2>
-            <p id="fall-status">Monitoring...</p>
-            <p id="current-weight">0.00 kg</p>
+    <div class="container">
+        <div id="durian-box" class="box" onclick="openModal('fall')">
+            <h2>Durian Detection</h2>
+            <p id="fall-txt">Monitoring...</p>
+            <h3 id="weight-txt">0.00 kg</h3>
         </div>
-
-        <div id="monkey-box" class="section-box status-default" onclick="showDetails('intrusion')">
+        <div id="monkey-box" class="box" onclick="openModal('monkey')">
             <h2>Monkey Detection</h2>
-            <p id="monkey-status">Monitoring...</p>
+            <p id="monkey-txt">Area Clear</p>
         </div>
     </div>
 
-    <div id="detail-modal" class="modal">
-        <div class="modal-content-box">
-            <span class="close-button" onclick="document.getElementById('detail-modal').style.display='none'">&times;</span>
-            <h3 id="modal-title">Details</h3>
-            <div id="modal-body"></div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Log</h2>
+            <div id="modal-body" style="text-align: left; max-height: 300px; overflow-y: auto;"></div>
+            <button onclick="document.getElementById('myModal').style.display='none'">Close</button>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
     <script>
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyBV5R26svE_ukJOyPsx1XSvRSQ0UYrpuLM",
-            authDomain: "capstone-p1g03.firebaseapp.com",
             databaseURL: "https://capstone-p1g03-default-rtdb.firebaseio.com/",
-            projectId: "capstone-p1g03",
-            storageBucket: "capstone-p1g03.firebasestorage.app",
-            appId: "1:438598479102:web:78de052448974beef249af"
+            projectId: "capstone-p1g03"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const db = firebase.database();
 
-        let allFalls = [], allIntrusions = [];
+        let falls = [], intrusions = [];
 
-        // Sync Lists
-        db.ref('fall_events_log').on('value', s => { allFalls = []; s.forEach(c => allFalls.push(c.val())); allFalls.sort((a,b)=>b.timestamp-a.timestamp); });
-        db.ref('intrusion_images').on('value', s => { allIntrusions = []; s.forEach(c => allIntrusions.push(c.val())); allIntrusions.sort((a,b)=>b.timestamp-a.timestamp); });
-        db.ref('metrics/durian_fall_count').on('value', s => { document.getElementById('durian-count').innerText = s.val() || 0; });
+        // Real-time Listeners
+        db.ref('orchard_status/zone_a').on('value', s => {
+            const d = s.val(); if(!d) return;
+            document.getElementById('weight-txt').innerText = (d.net_weight_g/1000).toFixed(2) + " kg";
+            
+            // DURIAN LIGHT (GREEN)
+            const dBox = document.getElementById('durian-box');
+            if(d.fall_detected) { dBox.className = "box green-light"; document.getElementById('fall-txt').innerText="FALL DETECTED!"; }
+            else { dBox.className = "box"; document.getElementById('fall-txt').innerText="Monitoring..."; }
 
-        // Update Real-Time Colors
-        db.ref('orchard_status/zone_a').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            // Durian Weight & Box Color (GREEN)
-            document.getElementById('current-weight').innerText = (data.net_weight_g / 1000).toFixed(2) + " kg";
-            const durianBox = document.getElementById('durian-box');
-            if (data.fall_detected) {
-                durianBox.className = "section-box status-alert-durian";
-                document.getElementById('fall-status').innerText = "DURIAN FALL DETECTED!";
-            } else {
-                durianBox.className = "section-box status-default";
-                document.getElementById('fall-status').innerText = "Monitoring...";
-            }
-
-            // Monkey Box Color (RED)
-            const monkeyBox = document.getElementById('monkey-box');
-            if (data.intrusion_detected) {
-                monkeyBox.className = "section-box status-alert-monkey";
-                document.getElementById('monkey-status').innerText = "INTRUDER ALERT!";
-            } else {
-                monkeyBox.className = "section-box status-default";
-                document.getElementById('monkey-status').innerText = "Monitoring...";
-            }
+            // MONKEY LIGHT (RED)
+            const mBox = document.getElementById('monkey-box');
+            if(d.intrusion_detected) { mBox.className = "box red-light"; document.getElementById('monkey-txt').innerText="MONKEY ALERT!"; }
+            else { mBox.className = "box"; document.getElementById('monkey-txt').innerText="Area Clear"; }
         });
 
-        function showDetails(type) {
-            const modal = document.getElementById('detail-modal');
-            const body = document.getElementById('modal-body');
-            body.innerHTML = "";
-            if (type === 'fall') {
-                allFalls.forEach(f => { body.innerHTML += `<p>${new Date(f.timestamp*1000).toLocaleString()}: ${(f.net_weight_g/1000).toFixed(2)}kg</p>`; });
-            } else {
-                allIntrusions.forEach(i => { body.innerHTML += `<div class="intrusion-log-item"><strong>${new Date(i.timestamp*1000).toLocaleString()}</strong><br>Monkey Detected - Alarm Active</div>`; });
-            }
-            modal.style.display = 'block';
-        }
+        db.ref('metrics/durian_fall_count').on('value', s => document.getElementById('count-val').innerText = s.val() || 0);
+        db.ref('fall_events_log').on('value', s => { falls=[]; s.forEach(c => falls.push(c.val())); });
+        db.ref('intrusion_images').on('value', s => { intrusions=[]; s.forEach(c => intrusions.push(c.val())); });
 
-        function resetData() {
-            if(confirm("Clear data?")) db.ref().update({'metrics/durian_fall_count': 0, 'fall_events_log': null, 'intrusion_images': null});
+        function openModal(type) {
+            const body = document.getElementById('modal-body'); body.innerHTML = "";
+            if(type === 'fall') {
+                document.getElementById('modal-title').innerText = "Fall History";
+                falls.reverse().forEach(f => body.innerHTML += `<p>${new Date(f.timestamp*1000).toLocaleString()} - ${f.net_weight_g}g</p>`);
+            } else {
+                document.getElementById('modal-title').innerText = "Monkey History";
+                intrusions.reverse().forEach(i => body.innerHTML += `<p>${new Date(i.timestamp*1000).toLocaleString()} - Alarm Triggered</p>`);
+            }
+            document.getElementById('myModal').style.display = 'block';
         }
     </script>
 </body>
