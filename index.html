@@ -3,360 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <title>Droptrack – Smart Durian Detection System</title>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <style>
-        /* --- GLOBAL STYLES (DARK MODE) --- */
-        body {
-            font-family: 'Arial', sans-serif; background-color: #121212; 
-            color: #e0e0e0; text-align: center; margin: 0; padding: 0;
-        }
-
-        /* --- LOGO & HEADER STYLING --- */
-        .header-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-top: 20px;
-            gap: 15px;
-        }
-        .main-logo {
-            width: 60px; /* Matched to user request for custom logo */
-            height: auto;
-            filter: drop-shadow(0 0 5px rgba(0, 230, 118, 0.3));
-        }
-        h1 { color: #00e676; margin: 0; }
-
-        /* --- COUNTER AND RESET BUTTON CONTAINER --- */
-        #fall-counter-container {
-            display: flex; justify-content: center; gap: 20px; margin-top: 20px;
-        }
-        #fall-counter-display {
-            margin: 10px 0; font-size: 1.2em; color: #00e676; 
-            background-color: #1e1e1e; padding: 15px; border-radius: 8px; 
-            max-width: 400px;
-        }
-        #reset-button {
-            background-color: #ff9800; color: #121212; border: none; 
-            padding: 15px 30px; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; margin: 10px 0;
-            transition: background-color 0.3s;
-        }
-        #reset-button:hover { background-color: #e68a00; }
-
-        /* --- LAYOUT (FLEXBOX) --- */
-        #data-sections {
-            display: flex; justify-content: center; gap: 30px; padding: 30px; flex-wrap: wrap;
-        }
-
-        /* --- SECTION BOX STYLING --- */
-        .section-box {
-            background-color: #1e1e1e; padding: 30px; border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); width: 40%; 
-            min-width: 300px; cursor: pointer; transition: all 0.5s;
-        }
-        
-        .status-default { border: 2px solid #555; color: #b0b0b0; }
-        .status-alert {
-            background-color: #005020; border: 2px solid #00e676; 
-            box-shadow: 0 0 20px rgba(0, 230, 118, 0.5); color: #fff;
-        }
-        
-        /* --- EVENT LOG STYLING --- */
-        #event-log-area {
-            background-color: #1e1e1e; padding: 20px; margin: 0 auto;
-            max-width: 800px; border-radius: 12px; margin-top: 20px;
-        }
-        #events-log { 
-            list-style-type: none; padding: 0; text-align: left;
-            max-height: 300px; overflow-y: auto; 
-        }
-        #events-log li { padding: 8px 0; border-bottom: 1px dotted #333; }
-
-        /* --- MODAL STYLING --- */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.8); 
-            z-index: 100; 
-            overflow-y: auto; 
-        }
-        .modal-content-box { 
-            background: #1e1e1e; 
-            color: #fff; 
-            padding: 20px; 
-            border-radius: 10px; 
-            width: 80%; 
-            max-width: 500px; 
-            margin: 10% auto; 
-            max-height: 80vh; 
-            overflow-y: auto; 
-        }
-        
-        .close-button-outside { 
-            position: absolute; 
-            top: 8%; 
-            right: 12%; 
-            color: #fff; 
-            background: none; 
-            border: none;
-            font-size: 2.2em; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: color 0.2s;
-            z-index: 101; 
-            text-shadow: 0 0 5px rgba(0,0,0,0.8); 
-        }
-        .close-button-outside:hover { color: #ff9800; }
-        
-        .intrusion-image {
-            max-width: 100%; 
-            height: auto; 
-            border: 2px solid #ff9800; 
-            margin-top: 15px;
-        }
+        body { font-family: 'Arial', sans-serif; background-color: #121212; color: #e0e0e0; text-align: center; margin: 0; padding: 0; }
+        h1 { color: #00e676; padding-top: 20px; }
+        #fall-counter-display { margin: 10px 0; font-size: 1.2em; color: #00e676; background-color: #1e1e1e; padding: 15px; border-radius: 8px; display: inline-block; }
+        #reset-button { background-color: #ff9800; color: #121212; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #data-sections { display: flex; justify-content: center; gap: 30px; padding: 30px; }
+        .section-box { background-color: #1e1e1e; padding: 30px; border-radius: 12px; border: 2px solid #555; width: 40%; cursor: pointer; }
+        .status-alert { background-color: #005020; border-color: #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.5); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content-box { background: #1e1e1e; padding: 20px; border-radius: 10px; width: 80%; max-width: 500px; margin: 10% auto; }
+        .close-button { position: absolute; top: 5%; right: 10%; color: #fff; font-size: 2em; cursor: pointer; }
+        .intrusion-image { max-width: 100%; border: 2px solid #ff9800; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-    <div class="header-container">
-        <img src="logo.png" alt="Durian Logo" class="main-logo">
-        <h1>Droptrack – Smart Durian Detection System</h1>
-    </div>
-
-    <div id="fall-counter-container">
-        <div id="fall-counter-display">
-            Total Durians Detected: <strong id="durian-count">0</strong>
-        </div>
-
-        <button onclick="resetData()" id="reset-button">
-            Collected (Reset Data)
-        </button>
-    </div>
+    <h1>Droptrack Dashboard</h1>
+    <div id="fall-counter-display">Total Durians: <strong id="durian-count">0</strong></div>
+    <button onclick="resetData()" id="reset-button">Reset Data</button>
 
     <div id="data-sections">
-        <div id="fall-detection-section" class="section-box status-default" onclick="showDetails('fall')">
-            <h2>Durian Fall Detection</h2>
-            <p id="fall-status">Awaiting Data...</p>
-            <p id="current-weight">Weight: 0.00 kg</p>
+        <div id="fall-box" class="section-box" onclick="showDetails('fall')">
+            <h2>Fall Detection</h2>
+            <p id="fall-status">Monitoring...</p>
+            <p id="current-weight">0.00 kg</p>
         </div>
-
-        <div id="monkey-detection-section" class="section-box status-default" onclick="showDetails('intrusion')">
+        <div id="monkey-box" class="section-box" onclick="showDetails('intrusion')">
             <h2>Monkey Detection</h2>
-            <p id="monkey-status">Awaiting Data...</p>
+            <p id="monkey-status">Monitoring...</p>
         </div>
     </div>
 
     <div id="detail-modal" class="modal">
-        <button class="close-button-outside" onclick="document.getElementById('detail-modal').style.display='none'">
-            <i class="fas fa-times"></i>
-        </button>
+        <span class="close-button" onclick="document.getElementById('detail-modal').style.display='none'">&times;</span>
         <div class="modal-content-box">
             <h3 id="modal-title">Details</h3>
-            <p id="modal-content">No details available yet.</p>
-            <div id="image-display-area"></div> 
+            <div id="modal-body"></div>
         </div>
     </div>
 
-    <div id="event-log-area">
-        <h2>Recent Events Log</h2>
-        <ul id="events-log"><li>Awaiting events...</li></ul>
-    </div>
-    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyBV5R26svE_ukJOyPsx1XSvRSQ0UYrpuLM", 
+            apiKey: "AIzaSyBV5R26svE_ukJOyPsx1XSvRSQ0UYrpuLM",
             authDomain: "capstone-p1g03.firebaseapp.com",
-            databaseURL: "https://capstone-ba6d6-default-rtdb.asia-southeast1.firebasedatabase.app/", 
+            databaseURL: "https://capstone-p1g03-default-rtdb.firebaseio.com/",
             projectId: "capstone-p1g03",
-            storageBucket: "capstone-p1g03.firebasestorage.app",
-            messagingSenderId: "438598479102",
+            storageBucket: "capstone-p1g03.appspot.com",
             appId: "1:438598479102:web:78de052448974beef249af"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
-        const STATUS_PATH = 'orchard_status/zone_a';
-        const EVENTS_PATH = 'fall_events_log';
-        const COUNT_PATH = 'metrics/durian_fall_count'; 
-        const IMAGE_PATH = 'intrusion_images'; 
-        
-        const statusRef = db.ref(STATUS_PATH);
-        const eventsRef = db.ref(EVENTS_PATH).limitToLast(10); 
-        const countRef = db.ref(COUNT_PATH);
-        const imageRef = db.ref(IMAGE_PATH); 
-        const allFallEventsRef = db.ref(EVENTS_PATH); 
-        
-        const fallSection = document.getElementById('fall-detection-section');
-        const monkeySection = document.getElementById('monkey-detection-section');
-        const fallStatus = document.getElementById('fall-status');
-        const monkeyStatus = document.getElementById('monkey-status');
-        const currentWeight = document.getElementById('current-weight');
-        const eventsList = document.getElementById('events-log');
-        const durianCountElement = document.getElementById('durian-count');
-        const imageDisplayArea = document.getElementById('image-display-area'); 
-        
-        const FALL_THRESHOLD_GRAMS = 1500; 
-        let lastUpdateTime = "N/A"; 
-        let allConfirmedIntrusions = []; 
-        let allConfirmedFalls = []; 
-        const PERSISTENCE_DURATION = 3000; 
-        let fallTimer = null;
-        let intrusionTimer = null;
 
-        imageRef.on('value', (snapshot) => {
-            allConfirmedIntrusions = []; 
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                if (data.status && data.status.includes("Confirmed")) { 
-                    allConfirmedIntrusions.push(data);
-                }
-            });
-            allConfirmedIntrusions.sort((a, b) => b.timestamp - a.timestamp);
-        });
-        
-        // --- Corrected Filter for Durian Fall Detail Modal ---
-        allFallEventsRef.on('value', (snapshot) => {
-            allConfirmedFalls = [];
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                // Broadened filter to catch "DETECTED" and "CONFIRMED"
-                if (data.alert_status && data.alert_status.includes("FALL")) {
-                    allConfirmedFalls.push(data);
-                }
-            });
-            allConfirmedFalls.sort((a, b) => b.timestamp - a.timestamp);
+        let allFalls = [], allIntrusions = [];
+
+        db.ref('intrusion_images').on('value', s => { 
+            allIntrusions = []; 
+            s.forEach(c => { if(c.val().status.includes("Confirmed")) allIntrusions.push(c.val()); });
+            allIntrusions.sort((a,b) => b.timestamp - a.timestamp);
         });
 
-        countRef.on('value', (snapshot) => {
-            const count = snapshot.val();
-            if (count !== null) { durianCountElement.textContent = count; }
+        db.ref('fall_events_log').on('value', s => {
+            allFalls = [];
+            s.forEach(c => { if(c.val().alert_status.includes("FALL")) allFalls.push(c.val()); });
+            allFalls.sort((a,b) => b.timestamp - a.timestamp);
         });
 
-        statusRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const isFall = data.fall_detected;
-                const isIntrusion = data.intrusion_detected;
-                const weight_kg = (data.net_weight_g / 1000).toFixed(2); 
-                
-                lastUpdateTime = new Date(data.timestamp * 1000).toLocaleString();
-                currentWeight.textContent = `Weight: ${weight_kg} kg`; 
-
-                if (isFall) {
-                    fallStatus.textContent = "DURIAN FALL DETECTED (Waiting 3s)...";
-                    if (!fallTimer) {
-                        fallTimer = setTimeout(() => {
-                            fallStatus.textContent = "DURIAN FALL CONFIRMED!";
-                            fallSection.classList.remove('status-default');
-                            fallSection.classList.add('status-alert');
-                            fallTimer = null; 
-                        }, PERSISTENCE_DURATION);
-                    }
-                } else {
-                    fallStatus.textContent = "No Fall Detected. (Monitoring)";
-                    fallSection.classList.remove('status-alert');
-                    fallSection.classList.add('status-default');
-                    if (fallTimer) { clearTimeout(fallTimer); fallTimer = null; }
-                }
-
-                if (isIntrusion) {
-                    monkeyStatus.textContent = "INTRUSION DETECTED (Waiting 3s)...";
-                    if (!intrusionTimer) {
-                        intrusionTimer = setTimeout(() => {
-                            monkeyStatus.textContent = "INTRUSION ALERT! (Monkey/Human)";
-                            monkeySection.classList.remove('status-default');
-                            monkeySection.classList.add('status-alert');
-                            intrusionTimer = null; 
-                        }, PERSISTENCE_DURATION);
-                    }
-                } else {
-                    monkeyStatus.textContent = "Area Clear. (Monitoring)";
-                    monkeySection.classList.remove('status-alert');
-                    monkeySection.classList.add('status-default');
-                    if (intrusionTimer) { clearTimeout(intrusionTimer); intrusionTimer = null; }
-                }
-            }
-        });
-
-        eventsRef.on('child_added', (snapshot) => {
-            const eventData = snapshot.val();
-            const time = new Date(eventData.timestamp * 1000).toLocaleTimeString();
-            const weight_kg = (eventData.net_weight_g / 1000).toFixed(2);
-            const listItem = document.createElement('li');
-            listItem.style.color = eventData.alert_status.includes("FALL") ? '#00e676' : '#ff9800';
-            listItem.innerHTML = `[${time}] <strong>${eventData.alert_status}</strong> (Weight: ${weight_kg} kg)`;
-            eventsList.prepend(listItem); 
-            if (eventsList.lastChild && eventsList.lastChild.textContent.includes('Awaiting events')) {
-                eventsList.removeChild(eventsList.lastChild);
-            }
+        db.ref('orchard_status/zone_a').on('value', s => {
+            const d = s.val();
+            if(!d) return;
+            document.getElementById('current-weight').innerText = (d.net_weight_g/1000).toFixed(2) + " kg";
+            document.getElementById('fall-box').className = d.alert_status.includes("FALL") ? "section-box status-alert" : "section-box";
         });
 
         function showDetails(type) {
-            const modal = document.getElementById('detail-modal');
-            const title = document.getElementById('modal-title');
-            const content = document.getElementById('modal-content');
-            imageDisplayArea.innerHTML = ""; 
-
-            if (type === 'fall') {
-                title.textContent = "Durian Fall Detection Details";
-                let fallListHtml = `<p><strong>Total Durian Falls Logged: ${allConfirmedFalls.length}</strong></p>`;
-                if (allConfirmedFalls.length > 0) {
-                    fallListHtml += '<ul>';
-                    allConfirmedFalls.forEach(event => {
-                        const time = new Date(event.timestamp * 1000).toLocaleString();
-                        const weight_kg = (event.net_weight_g / 1000).toFixed(2);
-                        fallListHtml += `<li>[${time}] Weight: ${weight_kg} kg</li>`;
-                    });
-                    fallListHtml += '</ul>';
-                } else {
-                    fallListHtml += '<p>No confirmed durian falls logged yet.</p>';
-                }
-                content.innerHTML = `<p><strong>Last Update:</strong> ${lastUpdateTime}</p><hr>${fallListHtml}`;
-            } else if (type === 'intrusion') {
-                title.textContent = "Intrusion Detection Details";
-                let imageListHtml = "";
-                if (allConfirmedIntrusions.length > 0) {
-                    imageListHtml += `<hr><h4>Recent Confirmed Intrusion(s)</h4>`;
-                    allConfirmedIntrusions.slice(0, 5).forEach((intrusion) => {
-                        const timestamp = new Date(intrusion.timestamp * 1000).toLocaleString();
-                        imageListHtml += `
-                            <div style="margin-bottom: 25px;">
-                                <p style="color: #ff9800;">Captured at: <strong>${timestamp}</strong></p>
-                                <img src="${intrusion.image_url}" class="intrusion-image">
-                                <p style="font-size: 0.8em;">Status: ${intrusion.status}</p>
-                            </div>`;
-                    });
-                } else {
-                    imageListHtml = '<p style="color: #b0b0b0;">No confirmed intrusions logged yet.</p>';
-                }
-                content.innerHTML = `<p><strong>Last Status Update:</strong> ${lastUpdateTime}</p><hr>${imageListHtml}`;
+            const body = document.getElementById('modal-body');
+            body.innerHTML = "";
+            if(type === 'fall') {
+                allFalls.forEach(f => { body.innerHTML += `<p>${new Date(f.timestamp*1000).toLocaleString()}: ${(f.net_weight_g/1000).toFixed(2)}kg</p>`; });
+            } else {
+                allIntrusions.slice(0, 5).forEach(i => {
+                    body.innerHTML += `<div><p>${new Date(i.timestamp*1000).toLocaleString()}</p><img src="${i.image_url}" class="intrusion-image"></div>`;
+                });
             }
-            modal.style.display = 'block';
+            document.getElementById('detail-modal').style.display = 'block';
         }
 
         function resetData() {
-            if (!confirm("WARNING: Are you sure you want to reset ALL data?")) return; 
-            const rootRef = db.ref();
-            const updates = {};
-            updates[COUNT_PATH] = 0; 
-            updates[EVENTS_PATH] = null; 
-            updates[IMAGE_PATH] = null;
-            rootRef.update(updates).then(() => {
-                alert("Data Reset Successfully!");
-                eventsList.innerHTML = '<li>Awaiting events...</li>';
-                allConfirmedIntrusions = []; 
-                allConfirmedFalls = []; 
-            });
+            if(confirm("Reset data?")) db.ref().update({'metrics/durian_fall_count': 0, 'fall_events_log': null, 'intrusion_images': null});
         }
     </script>
 </body>
